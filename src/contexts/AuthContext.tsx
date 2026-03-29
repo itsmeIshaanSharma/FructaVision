@@ -36,8 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const appUrl = (import.meta.env.VITE_APP_URL as string | undefined) || window.location.origin;
-
+  const appUrl =
+    import.meta.env.VITE_APP_URL ||
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "");
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
