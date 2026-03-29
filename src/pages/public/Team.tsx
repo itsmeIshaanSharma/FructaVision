@@ -10,7 +10,7 @@ const TEAM = [
   {
     name: 'Ayush Saini',
     role: 'ML Model Training and Integration Lead',
-    bio: '23280',
+    bio: '2328016',
     img: '/team-2.png',
   },
 ];
