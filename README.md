@@ -34,8 +34,6 @@
 
 </div>
 
-> 📌 To add screenshots: create a `screenshots/` folder in the repo root and add images named `landing.png`, `analysis.png`, `dashboard.png`, `analytics.png`.
-
 ---
 
 ## 📖 Table of Contents
