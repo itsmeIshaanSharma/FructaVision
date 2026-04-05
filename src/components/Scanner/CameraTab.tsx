@@ -84,7 +84,7 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-muted/20 border border-border/50 rounded-3xl min-h-[500px] sm:min-h-[600px] md:min-h-[400px]">
+    <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-muted/20 border border-border/50 rounded-3xl min-h-[480px] sm:min-h-[560px] md:min-h-[520px]">
       
       {hasPermission === false ? (
         <div className="text-center p-8">
@@ -97,52 +97,49 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
           </p>
         </div>
       ) : (
-        <div className="w-full relative rounded-2xl overflow-hidden bg-black aspect-video sm:aspect-video md:aspect-video flex items-center justify-center max-h-[70vh] sm:max-h-none">
+        <div className="w-full relative rounded-2xl overflow-hidden bg-black h-full min-h-[340px] sm:min-h-[380px] md:min-h-[420px] max-h-[80vh]">
           <Webcam
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/jpeg"
-            videoConstraints={{ facingMode }}
+            videoConstraints={{ facingMode, width: 1280, height: 720 }}
             onUserMedia={onUserMedia}
             onUserMediaError={onUserMediaError}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
           
           {hasPermission && (
-            <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
-              <button
-                onClick={switchCamera}
-                className="p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
-                title="Switch Camera"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </button>
-              <button
-                onClick={toggleFlashlight}
-                disabled={!hasFlashlight}
-                className={`p-3 rounded-full transition-colors ${
-                  !hasFlashlight 
-                    ? 'bg-black/30 text-gray-500 cursor-not-allowed' 
-                    : flashlightOn 
-                      ? 'bg-yellow-500/80 hover:bg-yellow-500 text-black' 
-                      : 'bg-black/50 hover:bg-black/70 text-white'
-                }`}
-                title={hasFlashlight ? (flashlightOn ? "Turn Off Flashlight" : "Turn On Flashlight") : "Flashlight Not Available"}
-              >
-                {flashlightOn ? (
-                  <Flashlight className="w-5 h-5" />
-                ) : (
-                  <FlashlightOff className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          )}
-          
-          {hasPermission && (
-            <div className="absolute bottom-6 inset-x-0 flex justify-center w-full z-10">
+            <div className="absolute inset-x-4 bottom-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3 z-10">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={switchCamera}
+                  className="p-2.5 sm:p-3 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                  title="Switch Camera"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={toggleFlashlight}
+                  disabled={!hasFlashlight}
+                  className={`p-2.5 sm:p-3 rounded-full transition-colors ${
+                    !hasFlashlight 
+                      ? 'bg-black/30 text-gray-400 cursor-not-allowed' 
+                      : flashlightOn 
+                        ? 'bg-yellow-500/80 hover:bg-yellow-500 text-black' 
+                        : 'bg-black/60 hover:bg-black/80 text-white'
+                  }`}
+                  title={hasFlashlight ? (flashlightOn ? "Turn Off Flashlight" : "Turn On Flashlight") : "Flashlight Not Available"}
+                >
+                  {flashlightOn ? (
+                    <Flashlight className="w-5 h-5" />
+                  ) : (
+                    <FlashlightOff className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <button 
                 onClick={capture}
-                className="flex items-center space-x-2 px-8 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-lg transition-transform active:scale-95 border-4 border-white/20"
+                className="flex items-center justify-center space-x-2 min-w-[180px] w-full sm:w-auto px-6 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-lg transition-transform active:scale-95 border-4 border-white/20"
               >
                 <Camera className="w-5 h-5" />
                 <span>Capture & Analyze</span>
