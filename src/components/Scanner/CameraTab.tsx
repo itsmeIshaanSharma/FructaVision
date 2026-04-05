@@ -42,9 +42,23 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
           advanced: [{ torch: newTorchState } as MediaTrackConstraintSet]
         });
         setFlashlightOn(newTorchState);
+      } else {
+        // Try anyway for devices that might support torch but don't report it
+        const newTorchState = !flashlightOn;
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: newTorchState } as MediaTrackConstraintSet]
+          });
+          setFlashlightOn(newTorchState);
+          setHasFlashlight(true); // Update capability if it worked
+        } catch (fallbackError) {
+          console.warn("Flashlight not supported on this device:", fallbackError);
+          setHasFlashlight(false);
+        }
       }
     } catch (error) {
       console.error("Failed to toggle flashlight:", error);
+      setHasFlashlight(false);
     }
   }, [flashlightOn]);
 
@@ -54,8 +68,14 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
     // Check if flashlight is available
     const track = stream.getVideoTracks()[0];
     if (track) {
-      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
-      setHasFlashlight(!!capabilities.torch);
+      try {
+        const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+        setHasFlashlight(!!capabilities.torch);
+      } catch (error) {
+        console.warn("Could not check flashlight capabilities:", error);
+        // Assume flashlight might be available on mobile devices
+        setHasFlashlight(true);
+      }
     }
   }, []);
 
@@ -64,7 +84,7 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-muted/20 border border-border/50 rounded-3xl min-h-[400px]">
+    <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-muted/20 border border-border/50 rounded-3xl min-h-[500px] sm:min-h-[600px] md:min-h-[400px]">
       
       {hasPermission === false ? (
         <div className="text-center p-8">
@@ -77,7 +97,7 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
           </p>
         </div>
       ) : (
-        <div className="w-full relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+        <div className="w-full relative rounded-2xl overflow-hidden bg-black aspect-video sm:aspect-video md:aspect-video flex items-center justify-center max-h-[70vh] sm:max-h-none">
           <Webcam
             audio={false}
             ref={webcamRef}
@@ -97,23 +117,24 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
               >
                 <RotateCcw className="w-5 h-5" />
               </button>
-              {hasFlashlight && (
-                <button
-                  onClick={toggleFlashlight}
-                  className={`p-3 rounded-full transition-colors ${
-                    flashlightOn 
+              <button
+                onClick={toggleFlashlight}
+                disabled={!hasFlashlight}
+                className={`p-3 rounded-full transition-colors ${
+                  !hasFlashlight 
+                    ? 'bg-black/30 text-gray-500 cursor-not-allowed' 
+                    : flashlightOn 
                       ? 'bg-yellow-500/80 hover:bg-yellow-500 text-black' 
                       : 'bg-black/50 hover:bg-black/70 text-white'
-                  }`}
-                  title={flashlightOn ? "Turn Off Flashlight" : "Turn On Flashlight"}
-                >
-                  {flashlightOn ? (
-                    <Flashlight className="w-5 h-5" />
-                  ) : (
-                    <FlashlightOff className="w-5 h-5" />
-                  )}
-                </button>
-              )}
+                }`}
+                title={hasFlashlight ? (flashlightOn ? "Turn Off Flashlight" : "Turn On Flashlight") : "Flashlight Not Available"}
+              >
+                {flashlightOn ? (
+                  <Flashlight className="w-5 h-5" />
+                ) : (
+                  <FlashlightOff className="w-5 h-5" />
+                )}
+              </button>
             </div>
           )}
           
