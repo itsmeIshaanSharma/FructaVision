@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { Camera } from "lucide-react";
+import { Camera, RotateCcw, Flashlight, FlashlightOff } from "lucide-react";
 
 interface CameraTabProps {
   onImageCaptured: (imageSrc: string) => void;
@@ -9,6 +9,9 @@ interface CameraTabProps {
 export function CameraTab({ onImageCaptured }: CameraTabProps) {
   const webcamRef = useRef<Webcam>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [flashlightOn, setFlashlightOn] = useState(false);
+  const [hasFlashlight, setHasFlashlight] = useState(false);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
@@ -17,9 +20,44 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
     }
   }, [webcamRef, onImageCaptured]);
 
-  const onUserMedia = () => {
+  const switchCamera = useCallback(() => {
+    setFacingMode(prev => prev === "user" ? "environment" : "user");
+    setFlashlightOn(false); // Reset flashlight when switching cameras
+  }, []);
+
+  const toggleFlashlight = useCallback(async () => {
+    if (!webcamRef.current?.video) return;
+
+    const stream = webcamRef.current.video.srcObject as MediaStream;
+    if (!stream) return;
+
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+      if (capabilities.torch) {
+        const newTorchState = !flashlightOn;
+        await track.applyConstraints({
+          advanced: [{ torch: newTorchState } as MediaTrackConstraintSet]
+        });
+        setFlashlightOn(newTorchState);
+      }
+    } catch (error) {
+      console.error("Failed to toggle flashlight:", error);
+    }
+  }, [flashlightOn]);
+
+  const onUserMedia = useCallback((stream: MediaStream) => {
     setHasPermission(true);
-  };
+    
+    // Check if flashlight is available
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+      setHasFlashlight(!!capabilities.torch);
+    }
+  }, []);
 
   const onUserMediaError = () => {
     setHasPermission(false);
@@ -44,11 +82,40 @@ export function CameraTab({ onImageCaptured }: CameraTabProps) {
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/jpeg"
-            videoConstraints={{ facingMode: "environment" }}
+            videoConstraints={{ facingMode }}
             onUserMedia={onUserMedia}
             onUserMediaError={onUserMediaError}
             className="w-full h-full object-cover"
           />
+          
+          {hasPermission && (
+            <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+              <button
+                onClick={switchCamera}
+                className="p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                title="Switch Camera"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+              {hasFlashlight && (
+                <button
+                  onClick={toggleFlashlight}
+                  className={`p-3 rounded-full transition-colors ${
+                    flashlightOn 
+                      ? 'bg-yellow-500/80 hover:bg-yellow-500 text-black' 
+                      : 'bg-black/50 hover:bg-black/70 text-white'
+                  }`}
+                  title={flashlightOn ? "Turn Off Flashlight" : "Turn On Flashlight"}
+                >
+                  {flashlightOn ? (
+                    <Flashlight className="w-5 h-5" />
+                  ) : (
+                    <FlashlightOff className="w-5 h-5" />
+                  )}
+                </button>
+              )}
+            </div>
+          )}
           
           {hasPermission && (
             <div className="absolute bottom-6 inset-x-0 flex justify-center w-full z-10">
